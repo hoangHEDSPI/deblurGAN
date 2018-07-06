@@ -73,5 +73,10 @@ class GANLoss(nn.Module):
         target_tensor = self.get_target_label(input, target_is_real)
         return self.loss(input, target_tensor)
 
-
+class DiscLoss():
+    def name(self):
+        return "DiscLoss"
+    
+    def initialize(self, opt, tensor):
+        
 
