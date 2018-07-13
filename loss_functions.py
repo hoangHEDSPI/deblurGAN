@@ -5,6 +5,7 @@ import torch.autograd as autograd
 import numpy as np
 import torchvision.models as models
 from torch.autograd import Variable
+from image_pool import ImagePool
 
 class ContentLoss():
     def initialize(self, loss):
@@ -78,5 +79,51 @@ class DiscLoss():
         return "DiscLoss"
     
     def initialize(self, opt, tensor):
+        self.criterionGAN = GANLoss(use_l1=False, tensor=tensor)
+        self.fake_AB_pool = ImagePool(opt.pool_size)
+
+    def get_g_loss(self, net, realA, fakeB):
+        pred_fake = net.forward(fakeB)
+        return self.criterionGAN(pred_fake, 1)
+    
+    def get_loss(self, net, realA, fakeB, realB):
+        self.pred_fake = net.forward(fakeB.detach())
+        self.loss_D_fake = self.criterionGAN(self.pred_fake, 0)
+        
+        self.pred_real = net.forward(realB)
+        self.loss_D_real = self.criterionGAN(self.pred_real, 1)
+        
+        self.loss_D = (self.loss_D_fake+self.loss_D_real)*0.5
+        return self.loss_D
+
+
+class DiscLossLS(DiscLoss):
+    def name(self):
+        return "DiscLossLS"
+    
+    def initialize(self, opt, tensor):
+        DiscLoss.initialize(opt, tensor)
+        self.criterionGAN = GANLoss(use_l1=True, tensor=tensor)
+    
+    def get_g_loss(self, net, realA, fakeB):
+        return DiscLoss.get_g_loss(net, realA, fakeB)
+
+    def get_loss(self, net, realA, fakeB, realB):
+        return DiscLoss.get_loss(self, net, realA, fakeB, realB)
+
+class DiscLossWGANGP(DiscLossLS):
+    def name(self):
+        return "DiscLossWGANGP"
+
+    def initialize(self, opt, tensor):
+        DiscLossLS.initialize(self, opt, tensor)
+        self.LAMBDA = 10
+
+    def get_g_loss(self, net, realA, fakeB):
+        self.D_fake = net.forward(fakeB)
+        return -self.D_fake.mean()
+
+    def calc_gradient_penalty(self, netD)
+
         
 

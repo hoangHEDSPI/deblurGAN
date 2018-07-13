@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn 
 import torchvision
-import math
 
 def conv3x3(inplanes, outplanes, stride=1):
     return nn.Conv2d(inplanes, outplanes, kernel_size=3, stride=stride, padding=1, bias=False)
